@@ -19,14 +19,11 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     }
   })
   
-  client.query('SELECT * from songs') // your query string here
-    .then(result => console.log(result)) // your callback here
+  client.query('SELECT * from categories') // your query string here
+    .then(result => {
+      console.log(result.rows);
+      return res.json(result.rows);
+    }) // your callback here
     .catch(e => console.error(e.stack)) // your callback here
-    .then(() => client.end())
-
-  const { name = 'World' } = req.query;
-  console.log(JSON.stringify(req.query));
-  return res.json({
-    message: `Hello ${name}!`,
-  })
+    .then(() => client.end());  
 }
