@@ -1,7 +1,28 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Client } from 'pg';
+import multiparty from "multiparty";
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+const uploadRecording = async (req: VercelRequest, res: VercelResponse) => {
+  const form = new multiparty.Form();
+  const data : any = await new Promise((resolve, reject) => {
+    form.parse(req, function (err, fields, files) {
+      if (err) reject({ err });
+      resolve({ fields, files });
+    });
+  });
+  console.log(`data: `, JSON.stringify(data.files));
+
+  res.status(200).json({ success: true });
+};
+
+export default uploadRecording;
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+/*export default function handler(req: VercelRequest, res: VercelResponse) {
 
   const client = new Client({
     host: process.env.DB_HOST,
@@ -26,4 +47,4 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   })
 
   
-}
+}*/
