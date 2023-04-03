@@ -1,12 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Client } from 'pg';
 import multiparty from "multiparty";
+import * as ftp from "basic-ftp";
+var crypto = require('crypto');
+const path = require('path');
 
 const allowCors = fn => async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true)
   res.setHeader('Access-Control-Allow-Origin', '*')
-  // another common pattern
-  // res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -19,10 +20,6 @@ const allowCors = fn => async (req, res) => {
   return await fn(req, res)
 }
 
-const handler = (req, res) => {
-  const d = new Date()
-  res.end(d.toString())
-}
 
 
 const uploadRecording = async (req: VercelRequest, res: VercelResponse) => {
@@ -33,9 +30,52 @@ const uploadRecording = async (req: VercelRequest, res: VercelResponse) => {
       resolve({ fields, files });
     });
   });
-  console.log(`data: `, JSON.stringify(data.files));
 
-  res.status(200).json({ success: true });
+  const originalFilename = data.files.file[0]?.originalFilename;
+  const filename = String(new Date()) + originalFilename;
+  const localPath = data.files.file[0]?.path;
+  const extension = path.extname(originalFilename);
+  let hash = crypto.createHash('md5').update(filename).digest('hex');
+  const remotePath = `${hash}${extension}`;
+  const ftpClient = new ftp.Client()
+  ftpClient.ftp.verbose = true
+  try {
+      await ftpClient.access({
+          host: process.env.FTP_HOST,
+          user: process.env.FTP_USER,
+          password: process.env.FTP_PASS
+      })
+      await ftpClient.uploadFrom(localPath, remotePath);
+  }
+  catch(err) {
+      console.log(err)
+  }
+  ftpClient.close()
+
+  const client = new Client({
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+  });
+
+  client.connect((err) => {
+    if (err) {
+      console.error('connection error', err.stack);
+      return res.json(({success: false, error: "Error connecting to the database"}));
+    } else {
+        client.query(`INSERT INTO recordings (name, pathtofile, song_id, user_id) VALUES ('${data.fields.name}', '${process.env.RECORDING_URL + remotePath}', ${data.fields.song_id}, ${data.fields.user_id});`)
+        .then(result => { 
+            return res.json(({success: true}));
+        })
+        .catch(e => {
+          console.error(e.stack);
+          return res.json(({success: false, error: "Error inserting the recording into the database"}));
+        })
+        .then(() => client.end());  
+    }
+  })
 };
 
 module.exports = allowCors(uploadRecording)
@@ -45,30 +85,3 @@ export const config = {
     bodyParser: false,
   },
 };
-
-/*export default function handler(req: VercelRequest, res: VercelResponse) {
-
-  const client = new Client({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-  });
-   
-  client.connect((err) => {
-    if (err) {
-      console.error('connection error', err.stack)
-    } else {
-      console.log(req.body);
-      console.log(req.query);
-      
-      client.query('SELECT * from recordings') // your query string here
-        .then(result => { return res.json(result.rows); })
-        .catch(e => console.error(e.stack)) // your callback here
-        .then(() => client.end());  
-    }
-  })
-
-  
-}*/
