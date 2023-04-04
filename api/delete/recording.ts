@@ -30,7 +30,8 @@ const deleteRecording = async (req: VercelRequest, res: VercelResponse) => {
           user: process.env.FTP_USER,
           password: process.env.FTP_PASS
       })
-      await ftpClient.remove(recording.pathtofile);
+      const remoteFilePath = recording.pathtofile.replace(`${process.env.RECORDING_URL}`, '');
+      await ftpClient.remove(remoteFilePath);
   }
   catch(err) {
       console.log(err)
