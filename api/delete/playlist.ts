@@ -30,7 +30,7 @@ function handler(req: VercelRequest, res: VercelResponse) {
     if (err) {
       console.error('connection error', err.stack)
     } else {
-        let playlist : {id: number, name: string, date: string, user_id: number, songs_id: Array<string>} = req.body;
+        let playlist : {id: number, name: string, date: string, user_id: number, songs_id: Array<any>} = req.body;
         console.log(playlist);
         client.query(`DELETE FROM playlists WHERE id = ${playlist.id};`)
         .then(result => { 
