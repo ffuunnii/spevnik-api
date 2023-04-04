@@ -38,8 +38,8 @@ function handler(req: VercelRequest, res: VercelResponse) {
     .then(result => {
       console.log(result.rows);
       return res.json(result.rows);
-    }) // your callback here
-    .catch(e => console.error(e.stack)) // your callback here
+    })
+    .catch(e => console.error(e.stack))
     .then(() => client.end());  
 }
 

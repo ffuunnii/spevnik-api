@@ -37,7 +37,7 @@ function handler(req: VercelRequest, res: VercelResponse) {
             console.log(result);
             return res.json(result.rows); 
         })
-        .catch(e => console.error(e.stack)) // your callback here
+        .catch(e => console.error(e.stack))
         .then(() => client.end());  
     }
   })  

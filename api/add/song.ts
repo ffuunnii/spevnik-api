@@ -30,12 +30,12 @@ function handler(req: VercelRequest, res: VercelResponse) {
     if (err) {
       console.error('connection error', err.stack)
     } else {
-        let playlist : {name: string, date: string, user_id: number, songs_id: Array<string>} = req.body;
-        console.log(playlist);
-        client.query(`INSERT INTO playlists (name, date, song_ids, user_id) VALUES ('${playlist.name}', '${playlist.date}', '{${playlist.songs_id.join(',')}}', ${playlist.user_id});`)
+        let song : {name: string, category_id: number, content: Array<any>} = req.body;
+        console.log(song);
+        client.query(`INSERT INTO songs (category_id, name, content) VALUES (${song.category_id}, '${song.name}', '${JSON.stringify(song.content)}');`)
         .then(result => { 
             console.log(result);
-            return res.json(result.rows); 
+            return res.json(result.rows);
         })
         .catch(e => console.error(e.stack))
         .then(() => client.end());  

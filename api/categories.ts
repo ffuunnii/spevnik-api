@@ -36,7 +36,7 @@ function handler(req: VercelRequest, res: VercelResponse) {
   
   client.query('SELECT * from categories') // your query string here
     .then(result => { return res.json(result.rows); })
-    .catch(e => console.error(e.stack)) // your callback here
+    .catch(e => console.error(e.stack))
     .then(() => client.end());  
 }
 
