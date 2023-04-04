@@ -17,7 +17,6 @@ const allowCors = fn => async (req, res) => {
 }
 
 function handler(req: VercelRequest, res: VercelResponse) {
-    console.log(req.body);
     return res.json({
         "token": "string",
         "first_name": "string",
