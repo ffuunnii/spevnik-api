@@ -32,7 +32,7 @@ function handler(req: VercelRequest, res: VercelResponse) {
     } else {
         let song : {name: string, category_id: number, content: Array<any>, subcategory_id: number} = req.body;
         console.log(song);
-        client.query(`INSERT INTO songs (category_id, name, content) VALUES (${song.category_id}, '${song.name}', '${JSON.stringify(song.content)}', ${song.subcategory_id || null});`)
+        client.query(`INSERT INTO songs (category_id, name, content, subcategory_id) VALUES (${song.category_id}, '${song.name}', '${JSON.stringify(song.content)}', ${song.subcategory_id || null});`)
         .then(result => { 
             console.log(result);
             return res.json(result.rows);
