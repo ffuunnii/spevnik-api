@@ -30,9 +30,9 @@ function handler(req: VercelRequest, res: VercelResponse) {
     if (err) {
       console.error('connection error', err.stack)
     } else {
-        let song : {id: number, name: string, category_id: number, content: Array<any>} = req.body;
+        let song : {id: number, name: string, category_id: number, content: Array<any>, subcategory_id: number} = req.body;
         console.log(song);
-        client.query(`UPDATE songs SET name = '${song.name}', category_id = '${song.category_id}', content = '${JSON.stringify(song.content)}' WHERE id = ${song.id};`)
+        client.query(`UPDATE songs SET name = '${song.name}', category_id = '${song.category_id}', content = '${JSON.stringify(song.content)}, subcategory_id = '${song.subcategory_id || null}' WHERE id = ${song.id};`)
         .then(result => { 
             console.log(result);
             return res.json(result.rows); 
