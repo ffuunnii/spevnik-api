@@ -62,7 +62,7 @@ const uploadRecording = async (req: VercelRequest, res: VercelResponse) => {
       console.error('connection error', err.stack);
       return res.json(({success: false, error: "Error connecting to the database"}));
     } else {
-        client.query(`INSERT INTO recordings (name, pathtofile, song_id, user_id) VALUES ('${data.fields.name}', '${process.env.RECORDING_URL + remotePath}', ${data.fields.song_id}, ${data.fields.user_id}, ${data.fields.recording_order});`)
+        client.query(`INSERT INTO recordings (name, pathtofile, song_id, user_id, recording_order) VALUES ('${data.fields.name}', '${process.env.RECORDING_URL + remotePath}', ${data.fields.song_id}, ${data.fields.user_id}, ${data.fields.recording_order});`)
         .then(result => { 
             return res.json(({success: true}));
         })
