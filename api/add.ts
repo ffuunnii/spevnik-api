@@ -34,6 +34,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return handleRecordingUpload(req, res);
   }
 
+  if (type === 'sheet') {
+    return handleSheetUpload(req, res);
+  }
+
   const client = connectClient();
   await client.connect();
 
@@ -118,6 +122,62 @@ async function handleRecordingUpload(req: VercelRequest, res: VercelResponse) {
       data.fields.song_id[0],
       data.fields.user_id[0],
       data.fields.recording_order[0],
+    ]);
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err.stack);
+    return res.status(500).json({ success: false, error: 'DB insert failed' });
+  } finally {
+    client.end();
+  }
+}
+
+// special handler for music sheets (with file)
+async function handleSheetUpload(req: VercelRequest, res: VercelResponse) {
+  const form = new multiparty.Form();
+  const data: any = await new Promise((resolve, reject) => {
+    form.parse(req, function (err, fields, files) {
+      if (err) reject({ err });
+      resolve({ fields, files });
+    });
+  });
+
+  const originalFilename = data.files.file[0]?.originalFilename;
+  const localPath = data.files.file[0]?.path;
+  const extension = path.extname(originalFilename);
+  const hash = crypto.createHash('md5').update(String(new Date()) + originalFilename).digest('hex');
+  const remotePath = `${hash}${extension}`;
+
+  const ftpClient = new ftp.Client();
+  ftpClient.ftp.verbose = true;
+
+  try {
+    await ftpClient.access({
+      host: process.env.FTP_HOST,
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+    });
+    await ftpClient.uploadFrom(localPath, remotePath);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'FTP upload failed' });
+  } finally {
+    ftpClient.close();
+  }
+
+  const client = connectClient();
+  await client.connect();
+
+  try {
+    const query = `
+      INSERT INTO sheets (name, pathtofile, song_id, user_id, sheet_order)
+      VALUES ($1, $2, $3, $4, $5)`;
+    await client.query(query, [
+      data.fields.name[0],
+      `${process.env.RECORDING_URL}${remotePath}`,
+      data.fields.song_id[0],
+      data.fields.user_id[0],
+      data.fields.sheet_order[0],
     ]);
     return res.json({ success: true });
   } catch (err) {
