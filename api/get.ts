@@ -11,32 +11,39 @@ const allowCors = fn => async (req, res) => {
     return
   }
   return await fn(req, res)
-}
+};
 
-function handler(req: VercelRequest, res: VercelResponse) {
+const allowedTables = ['songs', 'recordings', 'playlists', 'users', 'categories', 'subcategories'];
 
-  if(req.query.tablename) {
-    const client = new Client({
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASS,
-    });
-     
-    client.connect((err) => {
-      if (err) {
-        console.error('connection error', err.stack)
-      } else {
-        console.log('connected')
-      }
-    })
-    
-    client.query(`SELECT * from ${req.query.tablename}`) // your query string here
-      .then(result => { return res.json(result.rows); })
-      .catch(e => console.error(e.stack))
-      .then(() => client.end());
+async function handler(req: VercelRequest, res: VercelResponse) {
+  const { tablename } = req.query;
+
+  if (!tablename || typeof tablename !== 'string') {
+    return res.status(400).json({ error: 'Missing or invalid tablename' });
+  }
+
+  if (!allowedTables.includes(tablename)) {
+    return res.status(403).json({ error: 'Access to this table is not allowed' });
+  }
+
+  const client = new Client({
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+  });
+
+  try {
+    await client.connect();
+    const result = await client.query(`SELECT * FROM ${tablename}`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Database query failed' });
+  } finally {
+    client.end();
   }
 }
 
-module.exports = allowCors(handler)
+module.exports = allowCors(handler);
