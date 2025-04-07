@@ -13,7 +13,7 @@ const allowCors = fn => async (req, res) => {
   return await fn(req, res)
 };
 
-const allowedTables = ['songs', 'recordings', 'playlists', 'users', 'categories', 'subcategories'];
+const allowedTables = ['songs', 'recordings', 'playlists', 'users', 'categories', 'subcategories', 'sheets'];
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   const { tablename } = req.query;
